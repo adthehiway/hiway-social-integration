@@ -1,4 +1,4 @@
-import { PrismaClient, SocialPostStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/error.middleware';
 import { ayrshareService } from './ayrshare.service';
 import { CreatePostInput } from '../types';
@@ -12,7 +12,7 @@ export class PostsService {
     });
     if (!profile) throw new AppError(404, 'No Ayrshare profile for this company');
 
-    const status: SocialPostStatus = input.requireApproval
+    const status = input.requireApproval
       ? 'PENDING_APPROVAL'
       : input.scheduledAt
         ? 'SCHEDULED'
@@ -55,7 +55,7 @@ export class PostsService {
     try {
       for (const plat of post.platforms) {
         const caption = plat.hashtags.length
-          ? `${plat.caption} ${plat.hashtags.map((h) => `#${h}`).join(' ')}`
+          ? `${plat.caption} ${plat.hashtags.map((h: string) => `#${h}`).join(' ')}`
           : plat.caption;
 
         const result = await ayrshareService.createPost({

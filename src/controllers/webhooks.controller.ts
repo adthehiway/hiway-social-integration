@@ -32,9 +32,9 @@ export async function handleAyrshareWebhook(req: Request, res: Response, next: N
       where: { postId: platformPost.postId },
     });
 
-    const allPublished = allPlatforms.every((p) => p.status === 'published');
-    const allFailed = allPlatforms.every((p) => p.status === 'failed');
-    const anyPublished = allPlatforms.some((p) => p.status === 'published');
+    const allPublished = allPlatforms.every((p: { status: string }) => p.status === 'published');
+    const allFailed = allPlatforms.every((p: { status: string }) => p.status === 'failed');
+    const anyPublished = allPlatforms.some((p: { status: string }) => p.status === 'published');
 
     let postStatus: string;
     if (allPublished) postStatus = 'PUBLISHED';
