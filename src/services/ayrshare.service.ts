@@ -1,0 +1,102 @@
+import axios, { AxiosInstance } from 'axios';
+import { env } from '../config/env';
+import {
+  AyrsharePostResponse,
+  AyrshareProfileResponse,
+  AyrshareJWTResponse,
+  AyrshareGenerateResponse,
+} from '../types';
+
+export class AyrshareService {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: env.AYRSHARE_BASE_URL,
+      headers: {
+        Authorization: `Bearer ${env.AYRSHARE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  async createPost(params: {
+    post: string;
+    platforms: string[];
+    mediaUrls: string[];
+    profileKey: string;
+    scheduledDate?: string;
+    autoSchedule?: boolean;
+  }): Promise<AyrsharePostResponse> {
+    const body: Record<string, unknown> = {
+      post: params.post,
+      platforms: params.platforms,
+      mediaUrls: params.mediaUrls,
+      profileKey: params.profileKey,
+    };
+    if (params.scheduledDate) body.scheduleDate = params.scheduledDate;
+    if (params.autoSchedule) body.autoSchedule = true;
+
+    const { data } = await this.client.post('/post', body);
+    return data;
+  }
+
+  async deletePost(postId: string, profileKey: string): Promise<void> {
+    await this.client.delete('/post', { data: { id: postId, profileKey } });
+  }
+
+  async createProfile(title: string): Promise<AyrshareProfileResponse> {
+    const { data } = await this.client.post('/profiles/profile', { title });
+    return data;
+  }
+
+  async generateJWT(profileKey: string, domain: string): Promise<AyrshareJWTResponse> {
+    const { data } = await this.client.post('/profiles/generateJWT', {
+      profileKey,
+      domain,
+    });
+    return data;
+  }
+
+  async getProfile(profileKey: string): Promise<Record<string, unknown>> {
+    const { data } = await this.client.get(`/profiles/${profileKey}`);
+    return data;
+  }
+
+  async unlinkSocial(profileKey: string, platform: string): Promise<void> {
+    await this.client.delete('/profiles/social', {
+      data: { profileKey, platform },
+    });
+  }
+
+  async generateCaption(params: {
+    text: string;
+    platform?: string;
+  }): Promise<AyrshareGenerateResponse> {
+    const { data } = await this.client.post('/generate', params);
+    return data;
+  }
+
+  async generateHashtags(post: string): Promise<AyrshareGenerateResponse> {
+    const { data } = await this.client.post('/generate', {
+      post,
+      hashtags: true,
+    });
+    return data;
+  }
+
+  async setAutoSchedule(profileKey: string, schedule: string[]): Promise<void> {
+    await this.client.post('/auto-schedule/set', {
+      profileKey,
+      schedule,
+    });
+  }
+
+  async deleteAutoSchedule(profileKey: string): Promise<void> {
+    await this.client.delete('/auto-schedule/delete', {
+      data: { profileKey },
+    });
+  }
+}
+
+export const ayrshareService = new AyrshareService();

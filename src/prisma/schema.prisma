@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AyrshareProfile {
+  id         String       @id @default(uuid())
+  companyId  String       @unique
+  profileKey String       @unique
+  createdAt  DateTime     @default(now())
+  posts      SocialPost[]
+}
+
+model SocialPost {
+  id          String               @id @default(uuid())
+  companyId   String
+  mediaUrl    String
+  platforms   SocialPostPlatform[]
+  status      SocialPostStatus     @default(DRAFT)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  approval    PostApproval?
+  profile     AyrshareProfile      @relation(fields: [companyId], references: [companyId])
+}
+
+model SocialPostPlatform {
+  id              String  @id @default(uuid())
+  postId          String
+  platform        String
+  caption         String
+  hashtags        String[]
+  externalPostId  String?
+  externalPostUrl String?
+  status          String  @default("pending")
+  errorMessage    String?
+  post            SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostApproval {
+  id             String    @id @default(uuid())
+  postId         String    @unique
+  approvedBy     String?
+  approvedAt     DateTime?
+  rejectedBy     String?
+  rejectedAt     DateTime?
+  rejectionNotes String?
+  post           SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+enum SocialPostStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  PARTIAL
+  FAILED
+}
