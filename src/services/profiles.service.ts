@@ -9,48 +9,67 @@ export class ProfilesService {
     const existing = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
-    if (existing) throw new AppError(409, 'Profile already exists for this company');
+    if (existing) return existing;
 
-    const ayrshareProfile = await ayrshareService.createProfile(title);
+    try {
+      const ayrshareProfile = await ayrshareService.createProfile(title);
 
-    return prisma.ayrshareProfile.create({
-      data: {
-        companyId,
-        profileKey: ayrshareProfile.profileKey,
-      },
-    });
+      return prisma.ayrshareProfile.create({
+        data: {
+          companyId,
+          profileKey: ayrshareProfile.profileKey,
+        },
+      });
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      throw new AppError(502, `Ayrshare profile creation failed: ${msg}`);
+    }
   }
 
   async getConnectUrl(companyId: string, platform: string) {
-    const profile = await prisma.ayrshareProfile.findUnique({
-      where: { companyId },
-    });
-    if (!profile) throw new AppError(404, 'No profile for this company');
+    const profile = await this.ensureProfile(companyId);
 
-    const jwt = await ayrshareService.generateJWT(
-      profile.profileKey,
-      `${platform}.com`,
-    );
-    return { url: jwt.url };
+    try {
+      const jwt = await ayrshareService.generateJWT(
+        profile.profileKey,
+        `${platform}.com`,
+      );
+      return { url: jwt.url };
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      throw new AppError(502, `Ayrshare JWT generation failed: ${msg}`);
+    }
   }
 
   async listAccounts(companyId: string) {
-    const profile = await prisma.ayrshareProfile.findUnique({
-      where: { companyId },
-    });
-    if (!profile) throw new AppError(404, 'No profile for this company');
+    const profile = await this.ensureProfile(companyId);
 
-    return ayrshareService.getProfile(profile.profileKey);
+    try {
+      return ayrshareService.getProfile(profile.profileKey);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      throw new AppError(502, `Ayrshare profile fetch failed: ${msg}`);
+    }
   }
 
   async disconnectPlatform(companyId: string, platform: string) {
+    const profile = await this.ensureProfile(companyId);
+
+    try {
+      await ayrshareService.unlinkSocial(profile.profileKey, platform);
+      return { success: true };
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      throw new AppError(502, `Ayrshare disconnect failed: ${msg}`);
+    }
+  }
+
+  private async ensureProfile(companyId: string) {
     const profile = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
-    if (!profile) throw new AppError(404, 'No profile for this company');
-
-    await ayrshareService.unlinkSocial(profile.profileKey, platform);
-    return { success: true };
+    if (!profile) throw new AppError(404, 'No profile for this company. Create one first via POST /social/profiles');
+    return profile;
   }
 }
 

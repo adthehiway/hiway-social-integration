@@ -50,16 +50,29 @@ export class AyrshareService {
     return data;
   }
 
+  async deleteProfile(profileKey: string): Promise<void> {
+    await this.client.delete('/profiles/profile', { data: { profileKey } });
+  }
+
   async generateJWT(profileKey: string, domain: string): Promise<AyrshareJWTResponse> {
     const { data } = await this.client.post('/profiles/generateJWT', {
       profileKey,
       domain,
+      privateKey: true,
     });
     return data;
   }
 
   async getProfile(profileKey: string): Promise<Record<string, unknown>> {
-    const { data } = await this.client.get(`/profiles/${profileKey}`);
+    // Use /user endpoint with Profile-Key header to get profile-scoped data
+    const { data } = await this.client.get('/user', {
+      headers: { 'Profile-Key': profileKey },
+    });
+    return data;
+  }
+
+  async listProfiles(): Promise<Record<string, unknown>> {
+    const { data } = await this.client.get('/profiles');
     return data;
   }
 
