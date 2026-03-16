@@ -55,10 +55,14 @@ export class AyrshareService {
   }
 
   async generateJWT(profileKey: string, domain: string): Promise<AyrshareJWTResponse> {
+    const privateKey = env.AYRSHARE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    if (!privateKey) {
+      throw new Error('AYRSHARE_PRIVATE_KEY env var is not set. Get it from Ayrshare dashboard → Business → Private Key');
+    }
     const { data } = await this.client.post('/profiles/generateJWT', {
       profileKey,
       domain,
-      privateKey: true,
+      privateKey,
     });
     return data;
   }
