@@ -5,14 +5,15 @@ import { ayrshareService } from './ayrshare.service';
 const prisma = new PrismaClient();
 
 export class ProfilesService {
-  async create(companyId: string, title: string) {
+  async create(companyId: string, _title?: string) {
     const existing = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
     if (existing) return existing;
 
     try {
-      const ayrshareProfile = await ayrshareService.createProfile(title);
+      const profileTitle = `${companyId}-${Date.now()}`;
+      const ayrshareProfile = await ayrshareService.createProfile(profileTitle);
       console.log(`[Profiles] Created Ayrshare profile for ${companyId}: profileKey=${ayrshareProfile.profileKey}`);
 
       return prisma.ayrshareProfile.create({
