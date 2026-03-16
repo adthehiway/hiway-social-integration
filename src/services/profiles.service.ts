@@ -44,7 +44,8 @@ export class ProfilesService {
       await prisma.ayrshareProfile.delete({ where: { companyId } });
       console.log(`[Profiles] Deleted old profile and ${existing.posts.length} posts`);
     }
-    return this.create(companyId, companyId);
+    const title = `${companyId}-${Date.now()}`;
+    return this.create(companyId, title);
   }
 
   async getConnectUrl(companyId: string, platform: string) {
