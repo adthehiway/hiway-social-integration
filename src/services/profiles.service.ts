@@ -30,11 +30,19 @@ export class ProfilesService {
   async reset(companyId: string) {
     const existing = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
+      include: { posts: true },
     });
     if (existing) {
       console.log(`[Profiles] Resetting profile for ${companyId}: old profileKey=${existing.profileKey}`);
       try { await ayrshareService.deleteProfile(existing.profileKey); } catch (_) {}
+      // Delete related records first (cascade)
+      for (const post of existing.posts) {
+        await prisma.postApproval.deleteMany({ where: { postId: post.id } });
+        await prisma.socialPostPlatform.deleteMany({ where: { postId: post.id } });
+      }
+      await prisma.socialPost.deleteMany({ where: { companyId } });
       await prisma.ayrshareProfile.delete({ where: { companyId } });
+      console.log(`[Profiles] Deleted old profile and ${existing.posts.length} posts`);
     }
     return this.create(companyId, companyId);
   }
