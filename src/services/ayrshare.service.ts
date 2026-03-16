@@ -1,5 +1,4 @@
 import axios, { AxiosInstance } from 'axios';
-import crypto from 'crypto';
 import { env } from '../config/env';
 import {
   AyrsharePostResponse,
@@ -62,25 +61,19 @@ export class AyrshareService {
     if (!privateKey) {
       throw new Error('AYRSHARE_PRIVATE_KEY env var is not set');
     }
+    // Restore real newlines from env var
     privateKey = privateKey.replace(/\\n/g, '\n').trim();
 
-    // Convert PKCS#8 (BEGIN PRIVATE KEY) to PKCS#1 (BEGIN RSA PRIVATE KEY) if needed
-    if (privateKey.includes('BEGIN PRIVATE KEY')) {
-      try {
-        const keyObj = crypto.createPrivateKey(privateKey);
-        privateKey = keyObj.export({ type: 'pkcs1', format: 'pem' }) as string;
-        console.log(`[Ayrshare] Converted PKCS#8 → PKCS#1 (${privateKey.length} chars)`);
-      } catch (e: any) {
-        console.error(`[Ayrshare] Key conversion failed: ${e.message}`);
-      }
-    }
+    console.log(`[Ayrshare] generateJWT profileKey=${profileKey} domain=${domain} keyLength=${privateKey.length} keyStart=${privateKey.substring(0, 30)}...`);
 
-    console.log(`[Ayrshare] generateJWT profileKey=${profileKey} domain=${domain} keyStart=${privateKey.substring(0, 35)}...`);
+    // Ayrshare expects URL-encoded form data, not JSON
+    const params = new URLSearchParams();
+    params.append('profileKey', profileKey);
+    params.append('domain', domain);
+    params.append('privateKey', privateKey);
 
-    const { data } = await this.client.post('/profiles/generateJWT', {
-      profileKey,
-      domain,
-      privateKey,
+    const { data } = await this.client.post('/profiles/generateJWT', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     return data;
   }
