@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import crypto from 'crypto';
 import { env } from '../config/env';
 import {
   AyrsharePostResponse,
@@ -60,10 +61,20 @@ export class AyrshareService {
     if (!privateKey) {
       throw new Error('AYRSHARE_PRIVATE_KEY env var is not set');
     }
-    // Handle different newline formats from env vars
     privateKey = privateKey.replace(/\\n/g, '\n').trim();
 
-    console.log(`[Ayrshare] generateJWT profileKey=${profileKey} domain=${domain} keyLength=${privateKey.length} keyStart=${privateKey.substring(0, 30)}...`);
+    // Convert PKCS#8 (BEGIN PRIVATE KEY) to PKCS#1 (BEGIN RSA PRIVATE KEY) if needed
+    if (privateKey.includes('BEGIN PRIVATE KEY')) {
+      try {
+        const keyObj = crypto.createPrivateKey(privateKey);
+        privateKey = keyObj.export({ type: 'pkcs1', format: 'pem' }) as string;
+        console.log(`[Ayrshare] Converted PKCS#8 → PKCS#1 (${privateKey.length} chars)`);
+      } catch (e: any) {
+        console.error(`[Ayrshare] Key conversion failed: ${e.message}`);
+      }
+    }
+
+    console.log(`[Ayrshare] generateJWT profileKey=${profileKey} domain=${domain} keyStart=${privateKey.substring(0, 35)}...`);
 
     const { data } = await this.client.post('/profiles/generateJWT', {
       profileKey,
