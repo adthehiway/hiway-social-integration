@@ -67,9 +67,10 @@ export class AyrshareService {
     console.log(`[Ayrshare] generateJWT profileKey=${profileKey} domain=${domain} keyLength=${privateKey.length} keyStart=${privateKey.substring(0, 30)}...`);
 
     // Ayrshare expects URL-encoded form data, not JSON
+    // Domain is the Ayrshare SSO domain, not the social platform
     const params = new URLSearchParams();
     params.append('profileKey', profileKey);
-    params.append('domain', domain);
+    params.append('domain', env.AYRSHARE_DOMAIN || domain);
     params.append('privateKey', privateKey);
 
     const { data } = await this.client.post('/profiles/generateJWT', params, {

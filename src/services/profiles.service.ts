@@ -48,14 +48,12 @@ export class ProfilesService {
     return this.create(companyId, title);
   }
 
-  async getConnectUrl(companyId: string, platform: string) {
+  async getConnectUrl(companyId: string, _platform: string) {
     const profile = await this.ensureProfile(companyId);
 
     try {
-      const jwt = await ayrshareService.generateJWT(
-        profile.profileKey,
-        `${platform}.com`,
-      );
+      // Domain is the Ayrshare SSO domain (e.g. id-NacDD), not the social platform
+      const jwt = await ayrshareService.generateJWT(profile.profileKey, '');
       return { url: jwt.url };
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message;

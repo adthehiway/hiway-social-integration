@@ -9,6 +9,7 @@ const envSchema = z.object({
   AYRSHARE_API_KEY: z.string().min(1),
   AYRSHARE_BASE_URL: z.string().url().default('https://app.ayrshare.com/api'),
   AYRSHARE_PRIVATE_KEY: z.string().optional().default(''),
+  AYRSHARE_DOMAIN: z.string().default('id-NacDD'),
   HIWAY_API_KEY: z.string().min(1),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
