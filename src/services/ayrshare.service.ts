@@ -15,6 +15,7 @@ export class AyrshareService {
     const apiKey = env.AYRSHARE_API_KEY.trim();
     this.client = axios.create({
       baseURL: env.AYRSHARE_BASE_URL,
+      timeout: 15000,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
