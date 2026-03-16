@@ -13,6 +13,14 @@ const app = express();
 
 app.use(express.json());
 
+// Request logger
+app.use((req, _res, next) => {
+  if (req.path !== '/health') {
+    console.log(`[REQ] ${req.method} ${req.path} company=${req.headers['x-company-id'] || 'none'}`);
+  }
+  next();
+});
+
 // Health check (no auth)
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
@@ -32,6 +40,12 @@ export { app };
 
 if (require.main === module) {
   app.listen(env.PORT, () => {
-    console.log(`Server running on port ${env.PORT}`);
+    console.log(`[START] Server running on port ${env.PORT}`);
+    console.log(`[START] NODE_ENV=${env.NODE_ENV}`);
+    console.log(`[START] AYRSHARE_BASE_URL=${env.AYRSHARE_BASE_URL}`);
+    console.log(`[START] AYRSHARE_API_KEY=${env.AYRSHARE_API_KEY ? '***set***' : 'MISSING'}`);
+    console.log(`[START] AYRSHARE_PRIVATE_KEY=${env.AYRSHARE_PRIVATE_KEY ? `***set*** (${env.AYRSHARE_PRIVATE_KEY.length} chars)` : 'MISSING'}`);
+    console.log(`[START] HIWAY_API_KEY=${env.HIWAY_API_KEY ? '***set***' : 'MISSING'}`);
+    console.log(`[START] DATABASE_URL=${env.DATABASE_URL ? '***set***' : 'MISSING'}`);
   });
 }

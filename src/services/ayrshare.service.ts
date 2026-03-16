@@ -11,10 +11,11 @@ export class AyrshareService {
   private client: AxiosInstance;
 
   constructor() {
+    const apiKey = env.AYRSHARE_API_KEY.trim();
     this.client = axios.create({
       baseURL: env.AYRSHARE_BASE_URL,
       headers: {
-        Authorization: `Bearer ${env.AYRSHARE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });

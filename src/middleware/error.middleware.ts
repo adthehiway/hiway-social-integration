@@ -10,21 +10,30 @@ export class AppError extends Error {
   }
 }
 
-export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
+  const logContext = {
+    method: req.method,
+    path: req.path,
+    companyId: req.headers['x-company-id'] || 'none',
+  };
+
   if (err instanceof AppError) {
+    console.error(`[AppError] ${err.statusCode} ${err.message}`, logContext);
     return res.status(err.statusCode).json({ error: err.message });
   }
 
-  // Handle Axios errors from Ayrshare calls
   if (err.isAxiosError) {
     const status = err.response?.status || 502;
-    const message = err.response?.data?.message || err.message;
-    console.error('Ayrshare API error:', status, message);
+    const ayrshareMsg = err.response?.data?.message || err.response?.data?.details || 'Unknown';
+    const url = err.config?.url || 'unknown';
+    const method = err.config?.method?.toUpperCase() || '?';
+    console.error(`[Ayrshare] ${method} ${url} → ${status}: ${ayrshareMsg}`, logContext);
     return res.status(status >= 500 ? 502 : status).json({
-      error: `Ayrshare API error: ${message}`,
+      error: `Ayrshare API error: ${ayrshareMsg}`,
     });
   }
 
-  console.error('Unhandled error:', err.message || err);
-  return res.status(500).json({ error: 'Internal server error' });
+  console.error(`[Error] ${err.name || 'Unknown'}: ${err.message}`, logContext);
+  if (err.stack) console.error(err.stack.split('\n').slice(0, 5).join('\n'));
+  return res.status(500).json({ error: err.message || 'Internal server error' });
 }
