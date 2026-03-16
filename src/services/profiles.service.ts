@@ -13,6 +13,7 @@ export class ProfilesService {
 
     try {
       const ayrshareProfile = await ayrshareService.createProfile(title);
+      console.log(`[Profiles] Created Ayrshare profile for ${companyId}: profileKey=${ayrshareProfile.profileKey}`);
 
       return prisma.ayrshareProfile.create({
         data: {
@@ -24,6 +25,18 @@ export class ProfilesService {
       const msg = err.response?.data?.message || err.message;
       throw new AppError(502, `Ayrshare profile creation failed: ${msg}`);
     }
+  }
+
+  async reset(companyId: string) {
+    const existing = await prisma.ayrshareProfile.findUnique({
+      where: { companyId },
+    });
+    if (existing) {
+      console.log(`[Profiles] Resetting profile for ${companyId}: old profileKey=${existing.profileKey}`);
+      try { await ayrshareService.deleteProfile(existing.profileKey); } catch (_) {}
+      await prisma.ayrshareProfile.delete({ where: { companyId } });
+    }
+    return this.create(companyId, companyId);
   }
 
   async getConnectUrl(companyId: string, platform: string) {

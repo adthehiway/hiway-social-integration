@@ -22,6 +22,13 @@ export async function listAccounts(req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 }
 
+export async function resetProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const profile = await profilesService.reset(req.companyId!);
+    res.json(profile);
+  } catch (err) { next(err); }
+}
+
 export async function disconnectAccount(req: Request, res: Response, next: NextFunction) {
   try {
     const platform = Array.isArray(req.params.platform) ? req.params.platform[0] : req.params.platform;
