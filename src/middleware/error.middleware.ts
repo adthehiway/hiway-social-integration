@@ -23,13 +23,24 @@ export function errorHandler(err: any, req: Request, res: Response, _next: NextF
   }
 
   if (err.isAxiosError) {
-    const status = err.response?.status || 502;
-    const respData = err.response?.data;
-    const ayrshareMsg = respData?.message || respData?.details || respData?.error || (typeof respData === 'string' ? respData : JSON.stringify(respData)) || 'Unknown';
     const url = err.config?.url || 'unknown';
     const method = err.config?.method?.toUpperCase() || '?';
+
+    if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+      console.error(`[Ayrshare] ${method} ${url} → TIMEOUT`, logContext);
+      return res.status(504).json({ error: 'Ayrshare API timeout — try again' });
+    }
+
+    if (!err.response) {
+      console.error(`[Ayrshare] ${method} ${url} → NO RESPONSE (${err.code || err.message})`, logContext);
+      return res.status(502).json({ error: `Ayrshare API unreachable: ${err.code || err.message}` });
+    }
+
+    const status = err.response.status;
+    const respData = err.response.data;
+    const ayrshareMsg = respData?.message || respData?.details || respData?.error || (typeof respData === 'string' ? respData : JSON.stringify(respData)) || 'Unknown';
     console.error(`[Ayrshare] ${method} ${url} → ${status}: ${ayrshareMsg}`, logContext);
-    if (respData) console.error(`[Ayrshare] Full response:`, JSON.stringify(respData).substring(0, 500));
+    console.error(`[Ayrshare] Full response:`, JSON.stringify(respData).substring(0, 500));
     return res.status(status >= 500 ? 502 : status).json({
       error: `Ayrshare API error: ${ayrshareMsg}`,
     });

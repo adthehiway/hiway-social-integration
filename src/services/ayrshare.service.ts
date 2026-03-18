@@ -40,7 +40,7 @@ export class AyrshareService {
     if (params.autoSchedule) body.autoSchedule = true;
 
     console.log(`[Ayrshare] POST /post`, JSON.stringify(body));
-    const { data } = await this.client.post('/post', body);
+    const { data } = await this.client.post('/post', body, { timeout: 60000 });
     return data;
   }
 
