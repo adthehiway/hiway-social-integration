@@ -39,6 +39,7 @@ export class AyrshareService {
     if (params.scheduledDate) body.scheduleDate = params.scheduledDate;
     if (params.autoSchedule) body.autoSchedule = true;
 
+    console.log(`[Ayrshare] POST /post`, JSON.stringify(body));
     const { data } = await this.client.post('/post', body);
     return data;
   }

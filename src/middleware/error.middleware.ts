@@ -24,10 +24,12 @@ export function errorHandler(err: any, req: Request, res: Response, _next: NextF
 
   if (err.isAxiosError) {
     const status = err.response?.status || 502;
-    const ayrshareMsg = err.response?.data?.message || err.response?.data?.details || 'Unknown';
+    const respData = err.response?.data;
+    const ayrshareMsg = respData?.message || respData?.details || respData?.error || (typeof respData === 'string' ? respData : JSON.stringify(respData)) || 'Unknown';
     const url = err.config?.url || 'unknown';
     const method = err.config?.method?.toUpperCase() || '?';
     console.error(`[Ayrshare] ${method} ${url} → ${status}: ${ayrshareMsg}`, logContext);
+    if (respData) console.error(`[Ayrshare] Full response:`, JSON.stringify(respData).substring(0, 500));
     return res.status(status >= 500 ? 502 : status).json({
       error: `Ayrshare API error: ${ayrshareMsg}`,
     });
