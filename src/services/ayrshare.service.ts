@@ -54,18 +54,20 @@ export class AyrshareService {
     try {
       const res = await axios.head(url, {
         maxRedirects: 0,
-        validateStatus: (status) => status >= 200 && status < 400,
+        validateStatus: () => true,
         timeout: 10000,
       });
-      return url;
-    } catch (err: any) {
-      if (err.response?.status === 307 || err.response?.status === 302 || err.response?.status === 301) {
-        const redirectUrl = err.response.headers.location;
+      console.log(`[Ayrshare] resolveRedirect status=${res.status} location=${res.headers.location || 'none'}`);
+      if (res.status === 307 || res.status === 302 || res.status === 301) {
+        const redirectUrl = res.headers.location;
         if (redirectUrl) {
-          console.log(`[Ayrshare] Resolved redirect: ${url.substring(0, 60)}... → ${redirectUrl.substring(0, 60)}...`);
+          console.log(`[Ayrshare] Resolved redirect → ${redirectUrl.substring(0, 80)}...`);
           return redirectUrl;
         }
       }
+      return url;
+    } catch (err: any) {
+      console.error(`[Ayrshare] resolveRedirect failed: ${err.message}`);
       return url;
     }
   }
