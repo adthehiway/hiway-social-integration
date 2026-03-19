@@ -30,10 +30,15 @@ export class AyrshareService {
     scheduledDate?: string;
     autoSchedule?: boolean;
   }): Promise<AyrsharePostResponse> {
+    // Resolve Content Fabric redirects — Ayrshare doesn't follow 307s
+    const resolvedUrls = await Promise.all(
+      params.mediaUrls.map((url) => this.resolveRedirect(url))
+    );
+
     const body: Record<string, unknown> = {
       post: params.post,
       platforms: params.platforms,
-      mediaUrls: params.mediaUrls,
+      mediaUrls: resolvedUrls,
       profileKey: params.profileKey,
       isVideo: true,
     };
@@ -43,6 +48,26 @@ export class AyrshareService {
     console.log(`[Ayrshare] POST /post`, JSON.stringify(body));
     const { data } = await this.client.post('/post', body, { timeout: 60000 });
     return data;
+  }
+
+  private async resolveRedirect(url: string): Promise<string> {
+    try {
+      const res = await axios.head(url, {
+        maxRedirects: 0,
+        validateStatus: (status) => status >= 200 && status < 400,
+        timeout: 10000,
+      });
+      return url;
+    } catch (err: any) {
+      if (err.response?.status === 307 || err.response?.status === 302 || err.response?.status === 301) {
+        const redirectUrl = err.response.headers.location;
+        if (redirectUrl) {
+          console.log(`[Ayrshare] Resolved redirect: ${url.substring(0, 60)}... → ${redirectUrl.substring(0, 60)}...`);
+          return redirectUrl;
+        }
+      }
+      return url;
+    }
   }
 
   async deletePost(postId: string, profileKey: string): Promise<void> {
