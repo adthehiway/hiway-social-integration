@@ -50,6 +50,7 @@ export class PostsService {
       if (input.twitterOptions) platformOptions.twitterOptions = input.twitterOptions;
       if (input.linkedInOptions) platformOptions.linkedInOptions = input.linkedInOptions;
       if (input.threadsOptions) platformOptions.threadsOptions = input.threadsOptions;
+      if (input.pinterestOptions) platformOptions.pinterestOptions = input.pinterestOptions;
       await this.publishPost(post.id, smartLink, platformOptions);
     }
 

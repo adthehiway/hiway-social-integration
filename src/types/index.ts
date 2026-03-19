@@ -78,6 +78,13 @@ export const createPostSchema = z.object({
     thread: z.boolean().optional(),
     threadNumber: z.boolean().optional(),
   }).optional(),
+  pinterestOptions: z.object({
+    title: z.string().max(100).optional(),
+    boardId: z.string().optional(),
+    link: z.string().url().optional(),
+    altText: z.string().optional(),
+    thumbNail: z.string().url().optional(),
+  }).optional(),
 });
 
 export const approvePostSchema = z.object({
