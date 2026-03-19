@@ -52,11 +52,14 @@ export class AyrshareService {
 
   private async resolveRedirect(url: string): Promise<string> {
     try {
-      const res = await axios.head(url, {
+      const res = await axios.get(url, {
         maxRedirects: 0,
         validateStatus: () => true,
         timeout: 10000,
+        responseType: 'stream',
       });
+      // Destroy the stream immediately — we only need the headers
+      res.data.destroy();
       console.log(`[Ayrshare] resolveRedirect status=${res.status} location=${res.headers.location || 'none'}`);
       if (res.status === 307 || res.status === 302 || res.status === 301) {
         const redirectUrl = res.headers.location;
