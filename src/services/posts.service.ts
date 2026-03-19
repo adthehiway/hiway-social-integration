@@ -72,6 +72,7 @@ export class PostsService {
           profileKey: post.profile.profileKey,
           scheduledDate: post.scheduledAt?.toISOString(),
           autoSchedule: false,
+          title: plat.caption.substring(0, 100),
         });
 
         const postInfo = result.postIds?.[0];

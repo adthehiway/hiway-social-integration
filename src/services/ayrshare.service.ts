@@ -29,6 +29,7 @@ export class AyrshareService {
     profileKey: string;
     scheduledDate?: string;
     autoSchedule?: boolean;
+    title?: string;
   }): Promise<AyrsharePostResponse> {
     // Resolve Content Fabric redirects — Ayrshare doesn't follow 307s
     const resolvedUrls = await Promise.all(
@@ -44,6 +45,14 @@ export class AyrshareService {
     };
     if (params.scheduledDate) body.scheduleDate = params.scheduledDate;
     if (params.autoSchedule) body.autoSchedule = true;
+
+    // YouTube requires youTubeOptions with at least a title
+    if (params.platforms.includes('youtube')) {
+      body.youTubeOptions = {
+        title: params.title || params.post.substring(0, 100),
+        visibility: 'public',
+      };
+    }
 
     console.log(`[Ayrshare] POST /post`, JSON.stringify(body));
     const { data } = await this.client.post('/post', body, { timeout: 60000 });
