@@ -35,6 +35,7 @@ export class AyrshareService {
       platforms: params.platforms,
       mediaUrls: params.mediaUrls,
       profileKey: params.profileKey,
+      isVideo: true,
     };
     if (params.scheduledDate) body.scheduleDate = params.scheduledDate;
     if (params.autoSchedule) body.autoSchedule = true;
