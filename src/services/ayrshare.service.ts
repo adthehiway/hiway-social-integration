@@ -14,7 +14,7 @@ export class AyrshareService {
     const apiKey = env.AYRSHARE_API_KEY.trim();
     this.client = axios.create({
       baseURL: env.AYRSHARE_BASE_URL,
-      timeout: 15000,
+      timeout: 30000,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export class AyrshareService {
     }
 
     console.log(`[Ayrshare] POST /post`, JSON.stringify(body));
-    const { data } = await this.client.post('/post', body, { timeout: 60000 });
+    const { data } = await this.client.post('/post', body, { timeout: 120000 });
     return data;
   }
 
