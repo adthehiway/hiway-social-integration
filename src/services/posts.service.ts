@@ -40,6 +40,7 @@ export class PostsService {
 
     if (!input.requireApproval) {
       const smartLink = input.includeSmartLink && input.smartLinkUrl ? input.smartLinkUrl : undefined;
+      console.log(`[Posts] includeSmartLink=${input.includeSmartLink} smartLinkUrl=${input.smartLinkUrl || 'none'} resolved=${smartLink || 'none'}`);
       await this.publishPost(post.id, smartLink);
     }
 
