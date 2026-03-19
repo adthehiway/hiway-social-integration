@@ -32,16 +32,14 @@ export class AyrshareService {
     platformOptions?: Record<string, unknown>;
   }): Promise<AyrsharePostResponse> {
     // Resolve Content Fabric redirects — Ayrshare doesn't follow 307s
-    // Skip for TikTok: resolved URLs return 404 for TikTok's media fetcher
-    const hasTikTok = params.platforms.some((p) => p.toLowerCase() === 'tiktok');
-    const mediaUrls = hasTikTok
-      ? params.mediaUrls
-      : await Promise.all(params.mediaUrls.map((url) => this.resolveRedirect(url)));
+    const resolvedUrls = await Promise.all(
+      params.mediaUrls.map((url) => this.resolveRedirect(url))
+    );
 
     const body: Record<string, unknown> = {
       post: params.post,
       platforms: params.platforms,
-      mediaUrls,
+      mediaUrls: resolvedUrls,
       profileKey: params.profileKey,
       isVideo: true,
     };
