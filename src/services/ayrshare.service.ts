@@ -200,6 +200,9 @@ export class AyrshareService {
     if (params.daily) body.daily = true;
     const { data } = await this.client.post('/analytics/social', body, {
       headers: { 'Profile-Key': params.profileKey },
+      // Ayrshare returns 401 when a single platform (e.g. YouTube) has auth issues,
+      // but the response body still contains valid analytics for all other platforms.
+      validateStatus: (status) => status < 500,
     });
     return data;
   }
