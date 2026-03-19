@@ -172,6 +172,51 @@ export class AyrshareService {
       data: { profileKey },
     });
   }
+
+  async getPostAnalytics(params: {
+    id: string;
+    platforms?: string[];
+    profileKey: string;
+  }): Promise<Record<string, unknown>> {
+    const { data } = await this.client.post('/analytics/post', {
+      id: params.id,
+      platforms: params.platforms,
+    }, {
+      headers: { 'Profile-Key': params.profileKey },
+    });
+    return data;
+  }
+
+  async getSocialAnalytics(params: {
+    platforms: string[];
+    profileKey: string;
+    quarters?: number;
+    daily?: boolean;
+  }): Promise<Record<string, unknown>> {
+    const body: Record<string, unknown> = {
+      platforms: params.platforms,
+    };
+    if (params.quarters) body.quarters = params.quarters;
+    if (params.daily) body.daily = true;
+    const { data } = await this.client.post('/analytics/social', body, {
+      headers: { 'Profile-Key': params.profileKey },
+    });
+    return data;
+  }
+
+  async getPostHistory(params: {
+    profileKey: string;
+    lastDays?: number;
+    lastRecords?: number;
+  }): Promise<Record<string, unknown>> {
+    const query = new URLSearchParams();
+    if (params.lastDays) query.set('lastDays', String(params.lastDays));
+    if (params.lastRecords) query.set('lastRecords', String(params.lastRecords));
+    const { data } = await this.client.get(`/history?${query.toString()}`, {
+      headers: { 'Profile-Key': params.profileKey },
+    });
+    return data;
+  }
 }
 
 export const ayrshareService = new AyrshareService();

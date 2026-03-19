@@ -8,6 +8,7 @@ import accountsRoutes from './routes/accounts.routes';
 import webhooksRoutes from './routes/webhooks.routes';
 import aiRoutes from './routes/ai.routes';
 import schedulesRoutes from './routes/schedules.routes';
+import analyticsRoutes from './routes/analytics.routes';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/social/profiles', authMiddleware, profilesRoutes);
 app.use('/social/accounts', authMiddleware, accountsRoutes);
 app.use('/social/ai', authMiddleware, aiRoutes);
 app.use('/social/schedules', authMiddleware, schedulesRoutes);
+app.use('/social/analytics', authMiddleware, analyticsRoutes);
 
 app.use(errorHandler);
 
