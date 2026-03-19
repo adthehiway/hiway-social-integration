@@ -11,6 +11,8 @@ export const createPostSchema = z.object({
   scheduledAt: z.string().datetime().optional(),
   autoSchedule: z.boolean().optional().default(false),
   requireApproval: z.boolean().optional().default(false),
+  smartLinkUrl: z.string().url().optional(),
+  includeSmartLink: z.boolean().optional().default(false),
 });
 
 export const approvePostSchema = z.object({

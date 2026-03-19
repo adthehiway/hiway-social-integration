@@ -39,13 +39,14 @@ export class PostsService {
     });
 
     if (!input.requireApproval) {
-      await this.publishPost(post.id);
+      const smartLink = input.includeSmartLink && input.smartLinkUrl ? input.smartLinkUrl : undefined;
+      await this.publishPost(post.id, smartLink);
     }
 
     return post;
   }
 
-  async publishPost(postId: string) {
+  async publishPost(postId: string, smartLinkUrl?: string) {
     const post = await prisma.socialPost.findUnique({
       where: { id: postId },
       include: { platforms: true, profile: true },
@@ -54,9 +55,14 @@ export class PostsService {
 
     try {
       for (const plat of post.platforms) {
-        const caption = plat.hashtags.length
+        let caption = plat.hashtags.length
           ? `${plat.caption} ${plat.hashtags.map((h: string) => `#${h}`).join(' ')}`
           : plat.caption;
+
+        // Append SmartLink URL if provided
+        if (smartLinkUrl) {
+          caption = `${caption}\n\n${smartLinkUrl}`;
+        }
 
         const result = await ayrshareService.createPost({
           post: caption,
