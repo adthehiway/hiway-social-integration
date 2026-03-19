@@ -29,7 +29,7 @@ export class AyrshareService {
     profileKey: string;
     scheduledDate?: string;
     autoSchedule?: boolean;
-    title?: string;
+    platformOptions?: Record<string, unknown>;
   }): Promise<AyrsharePostResponse> {
     // Resolve Content Fabric redirects — Ayrshare doesn't follow 307s
     const resolvedUrls = await Promise.all(
@@ -46,10 +46,15 @@ export class AyrshareService {
     if (params.scheduledDate) body.scheduleDate = params.scheduledDate;
     if (params.autoSchedule) body.autoSchedule = true;
 
-    // YouTube requires youTubeOptions with at least a title
-    if (params.platforms.includes('youtube')) {
+    // Pass through platform-specific options
+    if (params.platformOptions) {
+      Object.assign(body, params.platformOptions);
+    }
+
+    // Auto-generate youTubeOptions if YouTube is selected but no options provided
+    if (params.platforms.includes('youtube') && !body.youTubeOptions) {
       body.youTubeOptions = {
-        title: params.title || params.post.substring(0, 100),
+        title: params.post.substring(0, 100),
         visibility: 'public',
       };
     }

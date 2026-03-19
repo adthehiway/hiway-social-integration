@@ -41,13 +41,22 @@ export class PostsService {
     if (!input.requireApproval) {
       const smartLink = input.includeSmartLink && input.smartLinkUrl ? input.smartLinkUrl : undefined;
       console.log(`[Posts] includeSmartLink=${input.includeSmartLink} smartLinkUrl=${input.smartLinkUrl || 'none'} resolved=${smartLink || 'none'}`);
-      await this.publishPost(post.id, smartLink);
+      // Collect platform options from input
+      const platformOptions: Record<string, unknown> = {};
+      if (input.youTubeOptions) platformOptions.youTubeOptions = input.youTubeOptions;
+      if (input.instagramOptions) platformOptions.instagramOptions = input.instagramOptions;
+      if (input.faceBookOptions) platformOptions.faceBookOptions = input.faceBookOptions;
+      if (input.tikTokOptions) platformOptions.tikTokOptions = input.tikTokOptions;
+      if (input.twitterOptions) platformOptions.twitterOptions = input.twitterOptions;
+      if (input.linkedInOptions) platformOptions.linkedInOptions = input.linkedInOptions;
+      if (input.threadsOptions) platformOptions.threadsOptions = input.threadsOptions;
+      await this.publishPost(post.id, smartLink, platformOptions);
     }
 
     return post;
   }
 
-  async publishPost(postId: string, smartLinkUrl?: string) {
+  async publishPost(postId: string, smartLinkUrl?: string, platformOptions?: Record<string, unknown>) {
     const post = await prisma.socialPost.findUnique({
       where: { id: postId },
       include: { platforms: true, profile: true },
@@ -72,7 +81,7 @@ export class PostsService {
           profileKey: post.profile.profileKey,
           scheduledDate: post.scheduledAt?.toISOString(),
           autoSchedule: false,
-          title: plat.caption.substring(0, 100),
+          platformOptions,
         });
 
         const postInfo = result.postIds?.[0];
