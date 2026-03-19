@@ -5,10 +5,21 @@ import { AppError } from '../middleware/error.middleware';
 
 const prisma = new PrismaClient();
 
+// Platforms that support Ayrshare analytics
+const ANALYTICS_PLATFORMS = [
+  'bluesky', 'facebook', 'gmb', 'instagram', 'linkedin',
+  'pinterest', 'reddit', 'snapchat', 'threads', 'tiktok',
+  'twitter', 'youtube',
+];
+
 async function getProfileKey(companyId: string): Promise<string> {
   const profile = await prisma.ayrshareProfile.findUnique({ where: { companyId } });
   if (!profile) throw new AppError(404, 'No profile for this company');
   return profile.profileKey;
+}
+
+function filterAnalyticsPlatforms(platforms: string[]): string[] {
+  return platforms.filter((p: string) => ANALYTICS_PLATFORMS.includes(p.toLowerCase()));
 }
 
 export async function getPostAnalytics(req: Request, res: Response, next: NextFunction) {
@@ -30,8 +41,10 @@ export async function getSocialAnalytics(req: Request, res: Response, next: Next
     const profileKey = await getProfileKey(req.companyId!);
     const { platforms, quarters, daily } = req.body;
     if (!platforms || !platforms.length) throw new AppError(400, 'platforms array is required');
+    const supported = filterAnalyticsPlatforms(platforms);
+    if (!supported.length) throw new AppError(400, 'None of the requested platforms support analytics');
     const data = await ayrshareService.getSocialAnalytics({
-      platforms,
+      platforms: supported,
       profileKey,
       quarters,
       daily,
