@@ -50,7 +50,19 @@ export class PostsService {
       if (input.twitterOptions) platformOptions.twitterOptions = input.twitterOptions;
       if (input.linkedInOptions) platformOptions.linkedInOptions = input.linkedInOptions;
       if (input.threadsOptions) platformOptions.threadsOptions = input.threadsOptions;
-      if (input.pinterestOptions) platformOptions.pinterestOptions = input.pinterestOptions;
+      if (input.pinterestOptions) {
+        const opts = { ...input.pinterestOptions } as Record<string, unknown>;
+        // blob: URLs are browser-only and invalid for Ayrshare — strip them
+        if (typeof opts.thumbNail === 'string' && opts.thumbNail.startsWith('blob:')) {
+          delete opts.thumbNail;
+        }
+        // Pinterest requires a valid thumbnail URL for video pins
+        const hasPinterest = input.platforms.some((p) => p.platform.toLowerCase() === 'pinterest');
+        if (hasPinterest && !opts.thumbNail) {
+          throw new AppError(400, 'Pinterest video pins require a valid thumbnail URL (not a blob: URL)');
+        }
+        platformOptions.pinterestOptions = opts;
+      }
       await this.publishPost(post.id, smartLink, platformOptions);
     }
 
