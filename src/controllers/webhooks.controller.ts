@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 export async function handleAyrshareWebhook(req: Request, res: Response, next: NextFunction) {
   try {
     const payload = req.body as AyrshareWebhookPayload;
+    console.log(`[Webhook] RECEIVED postId=${payload.postId} status=${payload.status} platform=${payload.platform || 'unknown'}`);
 
     const platformPost = await prisma.socialPostPlatform.findFirst({
       where: { externalPostId: payload.postId },
@@ -14,10 +15,13 @@ export async function handleAyrshareWebhook(req: Request, res: Response, next: N
     });
 
     if (!platformPost) {
+      console.log(`[Webhook] NO MATCH postId=${payload.postId} — no matching platform post found`);
       return res.status(200).json({ received: true, matched: false });
     }
 
     const newStatus = payload.status === 'success' ? 'published' : 'failed';
+    console.log(`[Webhook] UPDATING platformPostId=${platformPost.id} postId=${platformPost.postId} newStatus=${newStatus}`);
+
     await prisma.socialPostPlatform.update({
       where: { id: platformPost.id },
       data: {
@@ -26,6 +30,10 @@ export async function handleAyrshareWebhook(req: Request, res: Response, next: N
         errorMessage: payload.errors?.join('; '),
       },
     });
+
+    if (payload.errors?.length) {
+      console.error(`[Webhook] PLATFORM ERRORS postId=${payload.postId}: ${payload.errors.join('; ')}`);
+    }
 
     // Update parent post status based on all platform statuses
     const allPlatforms = await prisma.socialPostPlatform.findMany({
@@ -50,6 +58,11 @@ export async function handleAyrshareWebhook(req: Request, res: Response, next: N
       },
     });
 
+    console.log(`[Webhook] POST STATUS UPDATED postId=${platformPost.postId} status=${postStatus} platforms=${allPlatforms.map((p: { status: string; id: string }) => `${p.id}:${p.status}`).join(',')}`);
+
     res.status(200).json({ received: true, matched: true });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error(`[Webhook] ERROR processing webhook: ${(err as Error).message}`);
+    next(err);
+  }
 }

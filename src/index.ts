@@ -14,10 +14,15 @@ const app = express();
 
 app.use(express.json());
 
-// Request logger
-app.use((req, _res, next) => {
+// Request/response logger
+app.use((req, res, next) => {
   if (req.path !== '/health') {
-    console.log(`[REQ] ${req.method} ${req.path} company=${req.headers['x-company-id'] || 'none'}`);
+    const start = Date.now();
+    console.log(`[REQ] ${req.method} ${req.path} company=${req.headers['x-company-id'] || 'none'} host=${req.headers.host || 'unknown'}`);
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      console.log(`[RES] ${req.method} ${req.path} status=${res.statusCode} ${duration}ms`);
+    });
   }
   next();
 });

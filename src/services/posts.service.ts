@@ -10,7 +10,10 @@ export class PostsService {
     const profile = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
-    if (!profile) throw new AppError(404, 'No Ayrshare profile for this company');
+    if (!profile) {
+      console.error(`[Posts] No Ayrshare profile found for company=${companyId}`);
+      throw new AppError(404, 'No Ayrshare profile for this company');
+    }
 
     const status = input.requireApproval
       ? 'PENDING_APPROVAL'
@@ -76,6 +79,8 @@ export class PostsService {
     });
     if (!post) throw new AppError(404, 'Post not found');
 
+    console.log(`[Posts] PUBLISHING postId=${postId} platforms=${post.platforms.map(p => p.platform).join(',')} mediaUrl=${post.mediaUrl}`);
+
     try {
       for (const plat of post.platforms) {
         let caption = plat.hashtags.length
@@ -98,6 +103,7 @@ export class PostsService {
         });
 
         const postInfo = result.postIds?.[0];
+        console.log(`[Posts] SUBMITTED platform=${plat.platform} postId=${postId} externalId=${postInfo?.postId || result.id} externalUrl=${postInfo?.postUrl || 'pending'}`);
         await prisma.socialPostPlatform.update({
           where: { id: plat.id },
           data: {
@@ -113,6 +119,7 @@ export class PostsService {
         data: { status: post.scheduledAt ? 'SCHEDULED' : 'PUBLISHING' },
       });
     } catch (err) {
+      console.error(`[Posts] PUBLISH FAILED postId=${postId} error=${(err as Error).message}`);
       await prisma.socialPost.update({
         where: { id: postId },
         data: { status: 'FAILED' },

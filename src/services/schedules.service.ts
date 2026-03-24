@@ -26,6 +26,7 @@ export class SchedulesService {
       createdAt: new Date(),
     };
     schedules.set(id, schedule);
+    console.log(`[Schedules] CREATED id=${id} company=${companyId} name=${input.name}`);
     return schedule;
   }
 
@@ -36,6 +37,7 @@ export class SchedulesService {
   async update(id: string, companyId: string, input: UpdateScheduleInput): Promise<Schedule> {
     const schedule = schedules.get(id);
     if (!schedule || schedule.companyId !== companyId) {
+      console.error(`[Schedules] NOT FOUND id=${id} company=${companyId}`);
       throw new AppError(404, 'Schedule not found');
     }
     if (input.name) schedule.name = input.name;
@@ -47,9 +49,11 @@ export class SchedulesService {
   async delete(id: string, companyId: string): Promise<void> {
     const schedule = schedules.get(id);
     if (!schedule || schedule.companyId !== companyId) {
+      console.error(`[Schedules] NOT FOUND for delete id=${id} company=${companyId}`);
       throw new AppError(404, 'Schedule not found');
     }
     schedules.delete(id);
+    console.log(`[Schedules] DELETED id=${id} company=${companyId}`);
   }
 
   // For testing

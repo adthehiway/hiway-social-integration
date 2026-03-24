@@ -24,6 +24,7 @@ export function internalOnlyMiddleware(req: Request, res: Response, next: NextFu
   const host = req.hostname || req.headers.host?.replace(/:\d+$/, '');
 
   if (!isAllowedHost(req.headers.host) && !isAllowedHost(host)) {
+    console.error(`[Auth] BLOCKED external request host=${req.headers.host} hostname=${host} path=${req.path}`);
     return res.status(403).json({ error: 'Forbidden: internal access only' });
   }
 
