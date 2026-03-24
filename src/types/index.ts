@@ -98,7 +98,11 @@ export const rejectPostSchema = z.object({
 
 export const createProfileSchema = z.object({
   companyId: z.string().min(1),
-  title: z.string().min(1),
+  email: z.string().email(),
+});
+
+export const resetProfileSchema = z.object({
+  email: z.string().email(),
 });
 
 export const connectAccountSchema = z.object({

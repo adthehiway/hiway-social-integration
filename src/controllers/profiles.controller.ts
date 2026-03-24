@@ -3,7 +3,7 @@ import { profilesService } from '../services/profiles.service';
 
 export async function createProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const profile = await profilesService.create(req.body.companyId, req.body.title);
+    const profile = await profilesService.create(req.body.companyId, req.body.email);
     res.status(201).json(profile);
   } catch (err) { next(err); }
 }
@@ -24,7 +24,7 @@ export async function listAccounts(req: Request, res: Response, next: NextFuncti
 
 export async function resetProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const profile = await profilesService.reset(req.companyId!);
+    const profile = await profilesService.reset(req.companyId!, req.body.email);
     res.json(profile);
   } catch (err) { next(err); }
 }
