@@ -1,6 +1,6 @@
 import express from 'express';
 import { env } from './config/env';
-import { authMiddleware } from './middleware/auth.middleware';
+import { internalOnlyMiddleware } from './middleware/auth.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import postsRoutes from './routes/posts.routes';
 import profilesRoutes from './routes/profiles.routes';
@@ -28,13 +28,13 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 // Webhooks (no auth — Ayrshare calls this)
 app.use('/webhooks', webhooksRoutes);
 
-// Authenticated routes
-app.use('/social/posts', authMiddleware, postsRoutes);
-app.use('/social/profiles', authMiddleware, profilesRoutes);
-app.use('/social/accounts', authMiddleware, accountsRoutes);
-app.use('/social/ai', authMiddleware, aiRoutes);
-app.use('/social/schedules', authMiddleware, schedulesRoutes);
-app.use('/social/analytics', authMiddleware, analyticsRoutes);
+// Internal-only routes (localhost + *.railway.internal)
+app.use('/social/posts', internalOnlyMiddleware, postsRoutes);
+app.use('/social/profiles', internalOnlyMiddleware, profilesRoutes);
+app.use('/social/accounts', internalOnlyMiddleware, accountsRoutes);
+app.use('/social/ai', internalOnlyMiddleware, aiRoutes);
+app.use('/social/schedules', internalOnlyMiddleware, schedulesRoutes);
+app.use('/social/analytics', internalOnlyMiddleware, analyticsRoutes);
 
 app.use(errorHandler);
 
@@ -47,7 +47,7 @@ if (require.main === module) {
     console.log(`[START] AYRSHARE_BASE_URL=${env.AYRSHARE_BASE_URL}`);
     console.log(`[START] AYRSHARE_API_KEY=${env.AYRSHARE_API_KEY ? '***set***' : 'MISSING'}`);
     console.log(`[START] AYRSHARE_PRIVATE_KEY=${env.AYRSHARE_PRIVATE_KEY ? `***set*** (${env.AYRSHARE_PRIVATE_KEY.length} chars)` : 'MISSING'}`);
-    console.log(`[START] HIWAY_API_KEY=${env.HIWAY_API_KEY ? '***set***' : 'MISSING'}`);
+
     console.log(`[START] DATABASE_URL=${env.DATABASE_URL ? '***set***' : 'MISSING'}`);
   });
 }

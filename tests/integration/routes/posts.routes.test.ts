@@ -3,7 +3,7 @@ jest.mock('../../../src/config/env', () => ({
     PORT: 3000,
     AYRSHARE_API_KEY: 'test',
     AYRSHARE_BASE_URL: 'https://test.ayrshare.com/api',
-    HIWAY_API_KEY: 'test-key',
+
     NODE_ENV: 'test',
     DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   },
@@ -15,13 +15,13 @@ import request from 'supertest';
 import { app } from '../../../src/index';
 import { postsService } from '../../../src/services/posts.service';
 
-const headers = { 'x-api-key': 'test-key', 'x-company-id': 'comp1' };
+const headers = { host: 'localhost:3000', 'x-company-id': 'comp1' };
 
 describe('Posts Routes', () => {
   describe('POST /social/posts', () => {
-    it('returns 401 without auth', async () => {
+    it('returns 400 without company id', async () => {
       const res = await request(app).post('/social/posts').send({});
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
     });
 
     it('returns 400 with invalid body', async () => {
