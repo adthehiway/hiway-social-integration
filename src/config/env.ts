@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
+console.log('[BOOT] Loading environment variables...');
 dotenv.config();
 
 const envSchema = z.object({
@@ -17,11 +18,26 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 function loadEnv(): Env {
+  console.log('[BOOT] Validating environment variables...');
+
+  // Log which required vars are present (without values)
+  const requiredVars = ['DATABASE_URL', 'AYRSHARE_API_KEY'];
+  const optionalVars = ['PORT', 'AYRSHARE_BASE_URL', 'AYRSHARE_PRIVATE_KEY', 'AYRSHARE_DOMAIN', 'NODE_ENV'];
+
+  for (const key of requiredVars) {
+    console.log(`[BOOT] ${key}=${process.env[key] ? '***set***' : 'MISSING'}`);
+  }
+  for (const key of optionalVars) {
+    console.log(`[BOOT] ${key}=${process.env[key] || '(default)'}`);
+  }
+
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
-    console.error('Invalid environment variables:', result.error.flatten().fieldErrors);
+    console.error('[BOOT] FATAL: Invalid environment variables:', JSON.stringify(result.error.flatten().fieldErrors));
     process.exit(1);
   }
+
+  console.log('[BOOT] Environment variables validated successfully');
   return result.data;
 }
 
