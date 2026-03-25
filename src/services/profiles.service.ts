@@ -1,18 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/error.middleware';
 import { ayrshareService } from './ayrshare.service';
+import { obfuscateIdentifier } from '../utils/obfuscate';
 
 const prisma = new PrismaClient();
 
 export class ProfilesService {
-  async create(companyId: string, _title?: string) {
+  async create(companyId: string, email: string) {
     const existing = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
     if (existing) return existing;
 
     try {
-      const profileTitle = `${companyId}-${Date.now()}`;
+      const profileTitle = obfuscateIdentifier(email);
       const ayrshareProfile = await ayrshareService.createProfile(profileTitle);
       console.log(`[Profiles] Created Ayrshare profile for ${companyId}: profileKey=${ayrshareProfile.profileKey}`);
 
@@ -28,7 +29,7 @@ export class ProfilesService {
     }
   }
 
-  async reset(companyId: string) {
+  async reset(companyId: string, email: string) {
     const existing = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
       include: { posts: true },
@@ -45,8 +46,7 @@ export class ProfilesService {
       await prisma.ayrshareProfile.delete({ where: { companyId } });
       console.log(`[Profiles] Deleted old profile and ${existing.posts.length} posts`);
     }
-    const title = `${companyId}-${Date.now()}`;
-    return this.create(companyId, title);
+    return this.create(companyId, email);
   }
 
   async getConnectUrl(companyId: string, _platform: string) {

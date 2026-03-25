@@ -10,7 +10,10 @@ export class PostsService {
     const profile = await prisma.ayrshareProfile.findUnique({
       where: { companyId },
     });
-    if (!profile) throw new AppError(404, 'No Ayrshare profile for this company');
+    if (!profile) {
+      console.error(`[Posts] No Ayrshare profile found for company=${companyId}`);
+      throw new AppError(404, 'No Ayrshare profile for this company');
+    }
 
     const status = input.requireApproval
       ? 'PENDING_APPROVAL'
@@ -50,7 +53,19 @@ export class PostsService {
       if (input.twitterOptions) platformOptions.twitterOptions = input.twitterOptions;
       if (input.linkedInOptions) platformOptions.linkedInOptions = input.linkedInOptions;
       if (input.threadsOptions) platformOptions.threadsOptions = input.threadsOptions;
-      if (input.pinterestOptions) platformOptions.pinterestOptions = input.pinterestOptions;
+      if (input.pinterestOptions) {
+        const opts = { ...input.pinterestOptions } as Record<string, unknown>;
+        // blob: URLs are browser-only and invalid for Ayrshare — strip them
+        if (typeof opts.thumbNail === 'string' && opts.thumbNail.startsWith('blob:')) {
+          delete opts.thumbNail;
+        }
+        // Pinterest requires a valid thumbnail URL for video pins
+        const hasPinterest = input.platforms.some((p) => p.platform.toLowerCase() === 'pinterest');
+        if (hasPinterest && !opts.thumbNail) {
+          throw new AppError(400, 'Pinterest video pins require a valid thumbnail URL (not a blob: URL)');
+        }
+        platformOptions.pinterestOptions = opts;
+      }
       await this.publishPost(post.id, smartLink, platformOptions);
     }
 
@@ -63,6 +78,8 @@ export class PostsService {
       include: { platforms: true, profile: true },
     });
     if (!post) throw new AppError(404, 'Post not found');
+
+    console.log(`[Posts] PUBLISHING postId=${postId} platforms=${post.platforms.map(p => p.platform).join(',')} mediaUrl=${post.mediaUrl}`);
 
     try {
       for (const plat of post.platforms) {
@@ -86,6 +103,7 @@ export class PostsService {
         });
 
         const postInfo = result.postIds?.[0];
+        console.log(`[Posts] SUBMITTED platform=${plat.platform} postId=${postId} externalId=${postInfo?.postId || result.id} externalUrl=${postInfo?.postUrl || 'pending'}`);
         await prisma.socialPostPlatform.update({
           where: { id: plat.id },
           data: {
@@ -101,6 +119,7 @@ export class PostsService {
         data: { status: post.scheduledAt ? 'SCHEDULED' : 'PUBLISHING' },
       });
     } catch (err) {
+      console.error(`[Posts] PUBLISH FAILED postId=${postId} error=${(err as Error).message}`);
       await prisma.socialPost.update({
         where: { id: postId },
         data: { status: 'FAILED' },
